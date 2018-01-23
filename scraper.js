@@ -34,9 +34,19 @@ function fetchPage(url, callback) {
 			console.log("Error requesting page: " + error);
 			return;
 		}
-
 		callback(body);
 	});
+}
+
+function fetchPageById(url, callback, id) {
+	// Use request to read in pages. 
+	request(url, function (error, response, body) {
+		if (error) {
+			console.log("Error requesting page: " + error);
+			return;
+		}
+		callback(body, id);
+	},id);
 }
 
 function run(db) {
@@ -56,4 +66,7 @@ function run(db) {
 	});
 }
 
-initDatabase(run);
+//initDatabase(run);
+
+
+module.exports = { fetchPage, fetchPageById }
