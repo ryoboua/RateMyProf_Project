@@ -1,22 +1,16 @@
-require('./database.js');
-
-const scarper = require('./scraper.js');
+const Database = require('./database');
+const connection = Database.connection;
+const scarper = require('./scraper');
 const cheerio = require('cheerio');
 const mysql = require('mysql');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'NEWPASSWORD',
-    database: 'test1'
-});
 const package = [];
 var i = 0;
 
 // var s = [1452];
 // getSchoolInfo(s);
-// var p = [4];
-// getProfInfo(p);
+var p = [997496];
+getProfInfo(p);
 
 
 // for ( var i = 0; i < 2; i++) {
@@ -26,26 +20,25 @@ var i = 0;
 
 // }
 
-//Important link for all professor - http://www.ratemyprofessors.com/search.jsp?queryoption=HEADER&facetSearch=true
+//Important link for all professor - http://www.ratemyprofessors.com/search.jsp?queryoption=HEADER&queryBy=teacher
 
+// var q = 0;
+// const worm = setInterval(() => {
+//     fectch()
+// }, 2000);
+// const numberofpages = 326;
 
-var q = 0;
-const worm = setInterval(() => {
-    fectch()
-}, 2000);
-const numberofpages = 326;
-
-function fectch() {
-    if (q >= numberofpages) {
-        sendToDb(package);
-        return clearInterval(worm);
-    } else {
-        const offset = 20 * q;
-        console.log("Getting group " + q + "\n")
-        getListByCountry("united+states", offset); 
-        q++
-    }
-}
+// function fectch() {
+//     if (q >= numberofpages) {
+//         sendToDb(package);
+//         return clearInterval(worm);
+//     } else {
+//         const offset = 20 * q;
+//         console.log("Getting group " + q + "\n")
+//         getListByCountry("united+states", offset); 
+//         q++
+//     }
+// }
 
 
 //-------------------------------------------Function Section ---------------------------------------------------------------//
@@ -174,7 +167,9 @@ function catchProfInfo(data, id) {
             NumberOfStudentRatings: numberofrating
         }
 
+        
         package.push(post);
+        sendToDb(package);
     }
 }
 
@@ -246,9 +241,9 @@ async function sendToDb(data) {
   var numofentries = 0;
   connection.connect(function(err){console.log("Connection to database successfully etablished.\n")});
   for (let item of data) {
-    await connection.query('INSERT INTO USASchool SET ?', item, function(error, results, fields) {
+    await connection.query('INSERT INTO Teacher SET ?', item, function(error, results, fields) {
     if (error) throw error;
-    console.log("Professor successfully inserted in the USASchool table. Insert ID: " + results.insertId + "\n");
+    console.log("Professor successfully inserted in the Teacher table. Insert ID: " + results.insertId + "\n");
     });
     numofentries++;
   }
