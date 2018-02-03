@@ -2,16 +2,23 @@
   "version": "0.0.1",
   "main": "scraper.js",
   "dependencies": {
+    "chart.js": "^2.7.1",
     "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.2",
+    "express-handlebars": "^3.0.0",
+    "handlebars": "^4.0.11",
     "htmlparser": "^1.7.7",
     "jquery": "^3.2.1",
     "jsdom": "^11.5.1",
-    "request": "latest",
-    "sqlite3": "latest",
-    "stagger": "^1.0.0"
+    "mysql": "^2.15.0",
+    "request": "latest"
   },
   "keywords": [
     "scraper",
     "morph"
-  ]
+  ],
+  "scripts": {
+    "start": "nodemon ./rmp_scraper localhost 3000 -e handlebars",
+    "build": "browserify ./chartdata/columnchart_data.js -o bundle.js"
+  }
 }

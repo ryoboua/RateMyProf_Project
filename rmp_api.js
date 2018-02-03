@@ -9,8 +9,8 @@ var i = 0;
 
 // var s = [1452];
 // getSchoolInfo(s);
-var p = [997496];
-getProfInfo(p);
+// var p = [997496];
+// getProfInfo(p);
 
 
 // for ( var i = 0; i < 2; i++) {
@@ -21,25 +21,33 @@ getProfInfo(p);
 // }
 
 //Important link for all professor - http://www.ratemyprofessors.com/search.jsp?queryoption=HEADER&queryBy=teacher
+var lamda = 0;
+var q = 0;
+var worm =  setInterval(() => {
+    fectch()
+}, 20000);
 
-// var q = 0;
-// const worm = setInterval(() => {
-//     fectch()
-// }, 2000);
-// const numberofpages = 326;
+const numberofpages = 89440;
 
-// function fectch() {
-//     if (q >= numberofpages) {
-//         sendToDb(package);
-//         return clearInterval(worm);
-//     } else {
-//         const offset = 20 * q;
-//         console.log("Getting group " + q + "\n")
-//         getListByCountry("united+states", offset); 
-//         q++
-//     }
-// }
+function fectch() {
+    if (q >= numberofpages) {
+        sendToDb(package);
+        return clearInterval(worm);
+    }
+    else if (lamda == 1){
+        console.log("Sending to Db\n")
+        sendToDb(package);
+        lamda = 0;
+        return worm;
 
+    } else {
+        const offset = 20 * q;
+        console.log("Getting Page " + (q + 1) + "\n")
+        getAllProfs(offset);
+        q++
+        lamda++
+    }
+}
 
 //-------------------------------------------Function Section ---------------------------------------------------------------//
 
@@ -50,6 +58,10 @@ function getListByCountry(country, offset) {
 
 function getProfList(query, offset) {
     scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?query=" + query + "&offset=" + offset, catchList);
+}
+
+function getAllProfs(offset) {
+    scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?queryBy=teacherName&queryoption=HEADER&facetSearch=true&offset=" + offset, catchList);
 }
 
 function getProfInfoWorm(num) {
@@ -101,7 +113,7 @@ function getProfTagList(data) {
     return taglist;
 }
 
-function catchProfInfo(data, id) {
+async function catchProfInfo(data, id) {
     // create seperate fuunction to trim
 
     const $ = cheerio.load(data)
@@ -142,20 +154,20 @@ function catchProfInfo(data, id) {
         // console.log(taglist)
         // console.log("\nNumber of Students Ratings: " + numberofrating + "\n");
 
-        const results = {
-            id,
-            FirstName: pfname,
-            LastName: plname,
-            Department: info2[3],
-            //school: {
-            Id: schoolid,
-            Name: schoolname,
+        // const results = {
+        //     id,
+        //     FirstName: pfname,
+        //     LastName: plname,
+        //     Department: info2[3],
+        //     //school: {
+        //     Id: schoolid,
+        //     Name: schoolname,
 
-            //qualitylist: quality,
-            //taglist,
-            NumberOfStudentRatings: numberofrating
+        //     qualitylist: quality,
+        //     taglist,
+        //     NumberOfStudentRatings: numberofrating
 
-        }
+        // }
 
         const post = {
             rmp_p_id: id,
@@ -164,12 +176,15 @@ function catchProfInfo(data, id) {
             Department: info2[3],
             rmp_s_id: schoolid,
             SchoolName: schoolname,
-            NumberOfStudentRatings: numberofrating
-        }
-
-        
-        package.push(post);
-        sendToDb(package);
+            NumberOfStudentRatings: numberofrating,
+            Overall_Quality: quality.Overall_Quality,
+            Retake_Precentage: quality.Retake_Precentage,
+            Difficulty: quality.Difficulty,
+            taglist: JSON.stringify(taglist)
+        };
+        //console.log(post);
+       await package.push(post);
+        //sendToDb(package);
     }
 }
 
@@ -226,8 +241,8 @@ function catchList(data) {
     })
 
     //if ((proflist.length && schoollist.length) === 0) return console.log("No Professsor or School found with under search term.")
-    getSchoolInfo(schoollist);
-    //getProfInfo(proflist);
+    //getSchoolInfo(schoollist);
+    getProfInfo(proflist);
 
 }
 
@@ -243,10 +258,13 @@ async function sendToDb(data) {
   for (let item of data) {
     await connection.query('INSERT INTO Teacher SET ?', item, function(error, results, fields) {
     if (error) throw error;
-    console.log("Professor successfully inserted in the Teacher table. Insert ID: " + results.insertId + "\n");
+    //console.log("Professor successfully inserted in the Teacher table. Insert ID: " + results.insertId + "\n");
     });
     numofentries++;
   }
-  connection.end(function(err){ console.log("Connection Terminated. " + numofentries + " items entered\n")});
+  console.log(numofentries + " items entered\n");
+  // Clearing the package after each insert to db so there's no duplicates
+  package.length = 0;
+  //connection.end(function(err){ console.log("Connection Terminated. " + numofentries + " items entered\n")});
 }
 
