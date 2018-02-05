@@ -1,0 +1,113 @@
+
+<canvas id="myChart" width="400" height="400"></canvas>
+<script>
+  var ctx = document.getElementById("myChart");
+  var myDoughnutChart = new Chart(ctx, {
+    type: 'radar',
+	data: {
+	    labels: [
+	    'Reputation', 
+	    'Location', 
+	    'Internet', 
+	    'Food', 
+	    'Oppertunity', 
+	    'Facilities',
+	    'Clubs',
+	    'Social',
+	    'Happiness'
+	    ],
+	    datasets: [{
+	    	label: '{{school.[0].name}}',
+	        data: [
+	        {{school.[0].reputation}}, 
+	        {{school.[0].location}}, 
+	        {{school.[0].internet}},
+	       	{{school.[0].food}},
+	        {{school.[0].oppertunity}}, 
+	        {{school.[0].facilities}}, 
+	        {{school.[0].clubs}}, 
+	        {{school.[0].social}}, 
+	        {{school.[0].happiness}}, 
+	        ],
+	        backgroundColor: 'rgba(249, 43, 74, 0.5)',
+	        lineTension: 0.1
+	    	},
+	    	{
+	    	label: '{{school.[1].name}}',
+	        data: [
+	        {{school.[1].reputation}}, 
+	        {{school.[1].location}}, 
+	        {{school.[1].internet}},
+	       	{{school.[1].food}},
+	        {{school.[1].oppertunity}}, 
+	        {{school.[1].facilities}}, 
+	        {{school.[1].clubs}}, 
+	        {{school.[1].social}}, 
+	        {{school.[1].happiness}}, 
+	        ],
+	        backgroundColor: 'rgba(4, 81, 25, 0.5)',
+	        lineTension: 0.1
+	    	}
+
+	    ]
+	},
+	options: {
+	    scale: {
+        	ticks: {
+            	beginAtZero: true,
+            	max: 5
+        }
+    }
+	}
+    	
+	});
+</script>
+<br></br>
+<br></br>
+
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">School</th>
+      <th scope="col"># of Student Ratings</th>
+      <th scope="col">Reputation</th>
+      <th scope="col">Location</th>
+      <th scope="col">Internet</th>
+      <th scope="col">Food</th>
+      <th scope="col">Oppertunity</th>
+      <th scope="col">Facilities</th>
+      <th scope="col">Clubs</th>
+      <th scope="col">Social</th>
+      <th scope="col">Happiness</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td scope="row">{{school.[0].name}}</td>
+      <th>{{school.[0].num}}</th>
+      <td>{{school.[0].reputation}}</td>
+      <td>{{school.[0].location}}</td>
+      <td>{{school.[0].internet}}</td>
+      <td>{{school.[0].food}}</td>
+      <td>{{school.[0].oppertunity}}</td>
+      <td>{{school.[0].facilities}}</td>
+      <td>{{school.[0].clubs}}</td>
+      <td>{{school.[0].social}}</td>
+      <td>{{school.[0].happiness}}</td>
+
+    </tr>
+    <tr>
+      <td scope="row">{{school.[1].name}}</td>
+      <th>{{school.[1].num}}</th>
+      <td>{{school.[1].reputation}}</td>
+      <td>{{school.[1].location}}</td>
+      <td>{{school.[1].internet}}</td>
+      <td>{{school.[1].food}}</td>
+      <td>{{school.[1].oppertunity}}</td>
+      <td>{{school.[1].facilities}}</td>
+      <td>{{school.[1].clubs}}</td>
+      <td>{{school.[1].social}}</td>
+      <td>{{school.[1].happiness}}</td>
+    </tr>
+  </tbody>
+</table>

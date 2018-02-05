@@ -1,0 +1,32 @@
+<h1>{{teacher.name}}</h1>
+<canvas id="myChart" width="400" height="400"></canvas>
+<script>
+  var ctx = document.getElementById("myChart");
+  var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+	    datasets: [{
+	        data: [
+	        {{teacher.overallquality}}, 
+	        {{teacher.difficulty}}, 
+	        {{teacher.retake}}
+	        ],
+	        backgroundColor: [
+	    	'rgba(253, 101, 133, 0.5)',
+	    	'rgba(254, 204, 96, 0.5)',
+	    	'rgba(61, 163, 232, 0.5)'
+	    ]
+	    }],
+
+	    // These labels appear in the legend and in the tooltips when hovering different arcs
+	    labels: [
+	        'Overall Quality',
+	        'Difficulty',
+	        'Retake Value'
+	    ],
+	    
+
+	}
+    	
+	});
+</script>

@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
-  "main": "scraper.js",
+  "main": "app.js",
   "dependencies": {
     "chart.js": "^2.7.1",
     "cheerio": "^1.0.0-rc.2",
