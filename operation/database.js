@@ -6,7 +6,7 @@ const connection = mysql.createConnection({
   database : 'test1'
 });
 
-exports.connection = connection;
+module.exports.connection = connection;
 
 // class Database {
 //     constructor( config ) {
@@ -31,7 +31,3 @@ exports.connection = connection;
 //         } );
 //     }
 // }
-
-
-
-

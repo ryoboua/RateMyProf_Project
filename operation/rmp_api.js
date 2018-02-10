@@ -4,13 +4,16 @@ const scarper = require('./scraper');
 const cheerio = require('cheerio');
 const mysql = require('mysql');
 
+
+
 const package = [];
 var i = 0;
-
+//997496
 // var s = [1452];
 // getSchoolInfo(s);
-// var p = [997496];
-// getProfInfo(p);
+var p = [0,1,2,3,4,5];
+getProfInfo(p);
+
 
 
 // for ( var i = 0; i < 2; i++) {
@@ -21,33 +24,33 @@ var i = 0;
 // }
 
 //Important link for all professor - http://www.ratemyprofessors.com/search.jsp?queryoption=HEADER&queryBy=teacher
-var lamda = 0;
-var q = 0;
-var worm =  setInterval(() => {
-    fectch()
-}, 20000);
+// var lamda = 0;
+// var q = 0;
+// var worm =  setInterval(() => {
+//     fectch()
+// }, 20000);
 
-const numberofpages = 89440;
+// const numberofpages = 89440;
 
-function fectch() {
-    if (q >= numberofpages) {
-        sendToDb(package);
-        return clearInterval(worm);
-    }
-    else if (lamda == 1){
-        console.log("Sending to Db\n")
-        sendToDb(package);
-        lamda = 0;
-        return worm;
+// function fectch() {
+//     if (q >= numberofpages) {
+//         sendManyToDb(package);
+//         return clearInterval(worm);
+//     }
+//     else if (lamda == 1){
+//         console.log("Sending to Db\n")
+//         sendManyToDb(package);
+//         lamda = 0;
+//         return worm;
 
-    } else {
-        const offset = 20 * q;
-        console.log("Getting Page " + (q + 1) + "\n")
-        getAllProfs(offset);
-        q++
-        lamda++
-    }
-}
+//     } else {
+//         const offset = 20 * q;
+//         console.log("Getting Page " + (q + 1) + "\n")
+//         getAllProfs(offset);
+//         q++
+//         lamda++
+//     }
+// }
 
 //-------------------------------------------Function Section ---------------------------------------------------------------//
 
@@ -113,82 +116,96 @@ function getProfTagList(data) {
     return taglist;
 }
 
-async function catchProfInfo(data, id) {
-    // create seperate fuunction to trim
+function catchProfInfo(data, id) {
 
-    const $ = cheerio.load(data)
+  try { 
 
-    if (($("div").hasClass('header error')) === true) {
-        return console.log("Page Not Found At Id: "+id);
-    } else {
+        const $ = cheerio.load(data)
+   
+       if (($("div").hasClass('header error')) === true) {
+           return console.log("Page Not Found At Id: "+id);
+       } else {
+   
+           let firstname = $(".pfname").html();
+           let lastname = $(".plname").html();
+           let department = $(".result-title").html() === null ? '' : getProfDepartment($(".result-title").html().split("<", 1));
+           let schoolname = $(".schoolname").text().slice(3);
+           let school_id = stripId($(".schoolname").html())
+   
+           // Get Quality - Start ----------------------
+           const qualitylist = []
+   
+           $(".grade").each(function(i, elm) {
+               qualitylist[i] = $(this).html();
+           });
+   
+           let overall_quality = qualitylist[0];
+           let retake_precentage = qualitylist[1];
+           let difficulty = qualitylist[2];
+        
+           //Get Quality - End ------------------------
+           let taglist = getProfTagList($(".tag-box").html())
+   
+           let numberofrating = $(".rating-count").html().split("S", 1);
+           numberofrating = numberofrating[0];
+   
+           
+           let results = {
+               
+               firstname,
+               lastname,
+               department,
+               school_id,
+               schoolname,
+               overall_quality,
+               retake_precentage,
+               difficulty,
+               numberofrating
+           };
+   
+           for(info in results){
+               try{
+                   results[info] = results[info].trim()
+               }
+               catch(error){
+                   break;
+               }
+           }
 
-        const pfname = $(".pfname").html().trim();
-        const plname = $(".plname").html().trim();
-        const info = $(".result-title").html().split("<", 1);
-        const pinfo = info[0].trim();
-        const info2 = pinfo.split(" ");
-        const schoolname = $(".schoolname").text().slice(3);
-        const schoolid = stripId($(".schoolname").html())
+           results.id = id;
+   
+   
+           console.log(results)
+   
+      
+   
+          //console.log(results)
+   
+          //  const post = {
+          //      rmp_p_id: id,
+          //      FirstName: pfname,
+          //      LastName: plname,
+          //      Department: info2[3],
+          //      rmp_s_id: schoolid,
+          //      SchoolName: schoolname,
+          //      NumberOfStudentRatings: numberofrating,
+          //      Overall_Quality: quality.Overall_Quality,
+          //      Retake_Precentage: quality.Retake_Precentage,
+          //      Difficulty: quality.Difficulty,
+          //      taglist: JSON.stringify(taglist)
+          //  };
+          //  //console.log(post);
+          // //await package.push(post);
+          //  sendOnetoDb(post);
+       }
+   } catch(err){
+    return console.log("Some weird happned at Id: "+id);
+   }
 
-        // Get Quality - Start ----------------------
-        const qualitylist = []
-
-        $(".grade").each(function(i, elm) {
-            qualitylist[i] = $(this).html();
-        });
-
-        const quality = {
-            Overall_Quality: qualitylist[0].trim(),
-            Retake_Precentage: qualitylist[1].trim(),
-            Difficulty: qualitylist[2].trim()
-        }
-        //Get Quality - End ------------------------
-        const taglist = getProfTagList($(".tag-box").html())
-
-        const studentrating = $(".rating-count").html().split("S", 1);
-        const numberofrating = studentrating[0].trim();
-
-        // console.log("ID: " + id +" - "+ pfname + " " + plname + " is a " +  pinfo + " " + schoolname + " - School Id: "+ schoolid + ".\n")
-        // console.log(quality);
-        // console.log("\n");
-        // console.log(taglist)
-        // console.log("\nNumber of Students Ratings: " + numberofrating + "\n");
-
-        // const results = {
-        //     id,
-        //     FirstName: pfname,
-        //     LastName: plname,
-        //     Department: info2[3],
-        //     //school: {
-        //     Id: schoolid,
-        //     Name: schoolname,
-
-        //     qualitylist: quality,
-        //     taglist,
-        //     NumberOfStudentRatings: numberofrating
-
-        // }
-
-        const post = {
-            rmp_p_id: id,
-            FirstName: pfname,
-            LastName: plname,
-            Department: info2[3],
-            rmp_s_id: schoolid,
-            SchoolName: schoolname,
-            NumberOfStudentRatings: numberofrating,
-            Overall_Quality: quality.Overall_Quality,
-            Retake_Precentage: quality.Retake_Precentage,
-            Difficulty: quality.Difficulty,
-            taglist: JSON.stringify(taglist)
-        };
-        //console.log(post);
-       await package.push(post);
-        //sendToDb(package);
-    }
 }
 
 function catchSchoolInfo(data, id) {
+    //get school website link
     const $ = cheerio.load(data)
 
     if (($("div").hasClass('header error')) === true) {
@@ -247,12 +264,13 @@ function catchList(data) {
 }
 
 function stripId(data) {
-    const x = data.split("id=");
-    const id = x[1].split('"');
-    return id[0];
+    let x = data.split("id=");
+    x = x[1].split('"');
+    return x[0];
 }
 
-async function sendToDb(data) {
+
+async function sendManyToDb(data) {
   var numofentries = 0;
   connection.connect(function(err){console.log("Connection to database successfully etablished.\n")});
   for (let item of data) {
@@ -265,6 +283,24 @@ async function sendToDb(data) {
   console.log(numofentries + " items entered\n");
   // Clearing the package after each insert to db so there's no duplicates
   package.length = 0;
-  //connection.end(function(err){ console.log("Connection Terminated. " + numofentries + " items entered\n")});
+  connection.end(function(err){ console.log("Connection Terminated. " + numofentries + " items entered\n")});
+}
+
+function getProfDepartment(data) {
+    let info = data;
+        info = info[0].trim();
+        info = info.split(" ");
+    return info[3];
+}
+function sendOnetoDb(data) {
+    connection.connect((err)=>{});
+    
+    connection.query('INSERT INTO Teacher SET ?', data, function(error, results, fields) {
+    if (error) throw error;
+    //console.log("Professor successfully inserted in the Teacher table. Insert ID: " + results.insertId + "\n");
+    connection.end((err)=>{});
+
+    });
+ 
 }
 
