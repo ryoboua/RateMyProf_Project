@@ -5,13 +5,13 @@ const cheerio = require('cheerio');
 const mysql = require('mysql');
 const _ = require('underscore');
 
-
 var package = [];
-module.exports.package = package;
 var i = 0;
 
+module.exports = { getListByCountry, getAllProfs, sendManyTeachersToDb, sendManySchoolsToDb }
+module.exports.package = package;
 
-module.exports.getListByCountry = function(country, offset) {
+function getListByCountry(country, offset) {
     scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?query=&queryoption=HEADER&stateselect=&country=" + country + "&dept=&queryBy=schoolName&facetSearch=true&schoolName=&offset=" + offset + "&max=20", catchList);
 }
 
@@ -19,7 +19,7 @@ function getProfList(query, offset) {
     scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?query=" + query + "&offset=" + offset, catchList);
 }
 
-module.exports.getAllProfs = function(offset) {
+function getAllProfs(offset) {
     scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?queryBy=teacherName&queryoption=HEADER&facetSearch=true&offset=" + offset, catchList);
 }
 
@@ -130,10 +130,7 @@ async function catchProfInfo(data, id) {
             results.rmp_p_id = id;
             results.taglist = taglist
 
-
-
-            await package.push(results);
-            //  sendOnetoDb(post);
+            package.push(results);
         }
     } catch (err) {
         return console.log("Some weird happned at prof Id: " + id);
@@ -214,9 +211,8 @@ function catchList(data) {
 
     })
 
-    //if ((proflist.length && schoollist.length) === 0) return console.log("No Professsor or School found with under search term.")
-    getSchoolInfo(schoollist);
-    //getProfInfo(proflist);
+    if (schoollist.length) getSchoolInfo(schoollist);
+    if (proflist.length) getProfInfo(proflist);
 
 }
 
@@ -265,7 +261,7 @@ function sendOnetoDb(data) {
 
 }
 
-module.exports.sendManyTeachersToDb = async function(data) {
+async function sendManyTeachersToDb(data) {
     for (let item of data) {
         let temp = _.omit(item, 'taglist')
         await connection.query('INSERT INTO teachertest SET ?', temp, function(error, results, fields) {
@@ -300,12 +296,10 @@ module.exports.sendManyTeachersToDb = async function(data) {
 
 }
 
-module.exports.sendManySchoolsToDb = async function(data){
+async function sendManySchoolsToDb(data){
     for (let item of data){
         await connection.query('INSERT INTO school SET ?', item, (error, results, fields) => {
             if (error) throw error;
-            console.log("Inserted Id", results.insertId)
-
         })
     }
 }

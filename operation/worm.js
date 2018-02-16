@@ -18,8 +18,9 @@ const rmp_api = require('./rmp_api');
 var numOfDataset = 0;
 var index = 0;
 const numberofpages = 1;
+const interval = 5000;
 
-startWorm()
+startWorm();
 
 function startWorm(){
     prompt.start()
@@ -27,30 +28,30 @@ function startWorm(){
     prompt.get('wormType', (err, result) => {
 
         switch(result.wormType) {
-            case 'prof':
+            case 'teacher':
                 console.log("Opening worm hole\n")
                 let pworm =  setInterval(() => {
-                    profWorm()
-                }, 5000);
+                    profWorm();
+                }, interval);
                 
                 function profWorm() {
                     if (index == numberofpages) {
                         console.log("Sending Final Dataset to Db and closing worm hole")
-                        //rmp_api.sendManyTeachersToDb(rmp_api.package);
+                        rmp_api.sendManyTeachersToDb(rmp_api.package);
                         return clearInterval(pworm);
                     }
                     else if (numOfDataset == 1){
-                        console.log("Sending to Db\n")
-                        //rmp_api.sendManyTeachersToDb(rmp_api.package);
+                        console.log("Sending to Db\n");
+                        rmp_api.sendManyTeachersToDb(rmp_api.package);
                         numOfDataset = 0;
-                        return ProfWorm;
+                        return profWorm;
                 
                     } else {
                         const offset = 20 * index;
-                        console.log("Getting Page " + (index + 1) + "\n")
-                        //rmp_api.getAllProfs(offset);
-                        index++
-                        numOfDataset++
+                        console.log("Getting Page " + (index + 1) + "\n");
+                        rmp_api.getAllProfs(offset);
+                        index++;
+                        numOfDataset++;
                     }
                 }
             break;
@@ -58,31 +59,31 @@ function startWorm(){
                 console.log("Opening worm hole\n")
                 let sworm =  setInterval(() => {
                     schoolWorm()
-                }, 5000);
+                }, interval);
         
                 function schoolWorm() {
                     if (index === numberofpages){
-                        console.log("Sending Final Dataset to Db and closing worm hole")
-                        //rmp_api.sendManySchoolsToDb(rmp_api.package);
-                        return clearInterval(sworm);
+                        rmp_api.sendManySchoolsToDb(rmp_api.package);
+                        clearInterval(sworm);
+                        return console.log("Sending Final Dataset to Db and closing worm hole");
                     }
                     else if (numOfDataset === 1) {
-                        console.log("Sending to Db\n")
-                        //rmp_api.sendManySchoolsToDb(rmp_api.package);
+                        console.log("Sending to Db\n");
+                        rmp_api.sendManySchoolsToDb(rmp_api.package);
                         numOfDataset = 0;
-                        return SchoolWorm;
+                        return schoolWorm;
                 
                     } else {
                         const offset = 20 * index;
-                        console.log("Getting Page " + (index + 1) + "\n")
-                        //rmp_api.getListByCountry('canada',offset);
-                        index++
-                        numOfDataset++
+                        console.log("Getting Page " + (index + 1) + "\n");
+                        rmp_api.getListByCountry('canada',offset);
+                        index++;
+                        numOfDataset++;
                     }
                 }
             break;
             default:
-                console.log('Worm type not found')
+                console.log('Worm type not found');
         }
     })
 
