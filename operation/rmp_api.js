@@ -1,6 +1,6 @@
 const Database = require('./database');
 const connection = Database.connection;
-const scarper = require('./scraper');
+const scarper =  require('./scraper');
 const cheerio = require('cheerio');
 const mysql = require('mysql');
 const _ = require('underscore');
@@ -9,27 +9,9 @@ const _ = require('underscore');
 var package = [];
 module.exports.package = package;
 var i = 0;
-//997496
-// var s = [1452];
-// getSchoolInfo(s);
-// var p = [2004247,2004629,2004287];
-// getProfInfo(p);
 
 
-
-// for ( var i = 0; i < 1; i++) {
-//     const offset = 20 * i;
-//     getProfList("Alicia", offset);
-//     //getListByCountry("england",offset)
-
-// }
-
-
-
-//-------------------------------------------Function Section ---------------------------------------------------------------//
-
-
-function getListByCountry(country, offset) {
+module.exports.getListByCountry = function(country, offset) {
     scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?query=&queryoption=HEADER&stateselect=&country=" + country + "&dept=&queryBy=schoolName&facetSearch=true&schoolName=&offset=" + offset + "&max=20", catchList);
 }
 
@@ -61,21 +43,21 @@ function getProfInfo(list) {
 
 function getSchoolQualityStack(data) {
 
-    // This part gets the rating scores with the titles
+    const stack = [];
+    const $$ = cheerio.load(data);
+    $$(".rating").each(function(i, elm) {
+        const rating = cheerio.load($$(this).html());
+        stack[i] = rating(".score").text();
+    })
+
+    // This code gets the rating scores with the titles
     // const stack = {}
     // const $$ = cheerio.load(data);
     //   $$(".rating").each( function(i, elm) {
     //     const rating = cheerio.load($$(this).html())
     //     stack[rating(".label").text()] = rating(".score").text();
     //   })
-    //   return stack;
 
-    const stack = [];
-    const $$ = cheerio.load(data);
-    $$(".rating").each(function(i, elm) {
-        const rating = cheerio.load($$(this).html())
-        stack[i] = rating(".score").text();
-    })
     return stack;
 }
 
@@ -168,23 +150,23 @@ function catchSchoolInfo(data, id) {
         if (($("div").hasClass('header error')) === true) {
             return console.log("Page Not Found At Id: " + id);
         } else {
-            let sname = $(".result-text").text();
+            let name = $(".result-text").text();
 
-            let location = $(".result-title").html().split(">");
-            location = location[1].split("<", 1);
-            let slocation = location[0];
+            let address = $(".result-title").html().split(">");
+            address = address[1].split("<", 1);
+            let city = address[0];
 
             const SchoolQualityStack = getSchoolQualityStack($(".quality-breakdown").html())
 
-            let numberofschoolratings = $(".rating-count").html().split("S", 1);
-            numberofschoolratings = numberofschoolratings[0];
+            let numberOfStudentRatings = $(".rating-count").html().split("S", 1);
+            numberOfStudentRatings = numberOfStudentRatings[0];
 
             let website = $(".website-icon").attr('href');
 
             let results = {
-                sname,
-                slocation,
-                numberofschoolratings
+                name,
+                city,
+                numberOfStudentRatings
             }
 
             for (info in results) {
@@ -195,8 +177,7 @@ function catchSchoolInfo(data, id) {
                 }
             }
 
-
-            results.rmp_p_id = id;
+            results.rmp_s_id = id;
             results.reputation = SchoolQualityStack[0];
             results.location = SchoolQualityStack[1];
             results.internet = SchoolQualityStack[2];
@@ -209,12 +190,12 @@ function catchSchoolInfo(data, id) {
             results.safety = SchoolQualityStack[9];
             results.website = website;
 
+            results.country = 'canada';
 
-            console.log(results)
-            // package.push(results);
+            package.push(results);
         }
     } catch (err) {
-        return console.log("Some weird happned at school Id: " + id);
+        return console.log("Some weird happned at school Id: " + id + "\n" + err);
     }
 }
 
@@ -234,8 +215,8 @@ function catchList(data) {
     })
 
     //if ((proflist.length && schoollist.length) === 0) return console.log("No Professsor or School found with under search term.")
-    //getSchoolInfo(schoollist);
-    getProfInfo(proflist);
+    getSchoolInfo(schoollist);
+    //getProfInfo(proflist);
 
 }
 
@@ -244,7 +225,6 @@ function stripId(data) {
     x = x[1].split('"');
     return x[0];
 }
-
 
 async function sendManyToDb(data) {
     var numofentries = 0;
@@ -286,9 +266,7 @@ function sendOnetoDb(data) {
 }
 
 module.exports.sendManyTeachersToDb = async function(data) {
-    var tagholder = [];
     for (let item of data) {
-
         let temp = _.omit(item, 'taglist')
         await connection.query('INSERT INTO teachertest SET ?', temp, function(error, results, fields) {
 
@@ -296,19 +274,17 @@ module.exports.sendManyTeachersToDb = async function(data) {
 
             const pid = results.insertId;
             const list = item.taglist
-//Inserting Tags in the Database
+    //Inserting Tags in the Database
             for (let tag in list) {
                 findTagId(tag).then(t => {
-                    if (t.length > 0) {
+                    if (t.length) {
                         connection.query('INSERT INTO teacher_tags SET tagid = "?", teacherid = "?", count = ?', [t[0].tagid, pid, list[tag]], (error, results, fields) => {
                             if (error) throw error;                            
                         })
                     } else {
-                        addTag(tag).then(t => {
-                            console.log(t);
-                        } )
-                        
-                    }
+                        console.log("tag could not be found for prodId: "+pid)
+                    } 
+                    
                 })
 
             }
@@ -319,14 +295,24 @@ module.exports.sendManyTeachersToDb = async function(data) {
 
     console.log("Done")
 
-// Clearing the package after each insert to db so there's no duplicates
+    // Clearing the package after each insert to db so there's no duplicates
     package.length = 0;
 
 }
 
+module.exports.sendManySchoolsToDb = async function(data){
+    for (let item of data){
+        await connection.query('INSERT INTO school SET ?', item, (error, results, fields) => {
+            if (error) throw error;
+            console.log("Inserted Id", results.insertId)
+
+        })
+    }
+}
+
 async function findTagId(tag) {
     return new Promise(function(resolve, reject) {
-            connection.query('SELECT tagid FROM all_tags WHERE tagtitle = ?', tag, function(error, result, fields) {
+            connection.query('SELECT tagid FROM tags WHERE tagtitle = ?', tag, function(error, result, fields) {
             if (error) throw error;
             resolve(JSON.parse(JSON.stringify(result)));
         })

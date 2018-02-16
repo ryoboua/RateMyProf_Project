@@ -66,7 +66,4 @@ function run(db) {
 	});
 }
 
-//initDatabase(run);
-
-
 module.exports = { fetchPage, fetchPageById }
