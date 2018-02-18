@@ -17,12 +17,13 @@ const rmp_api = require('./rmp_api');
 // Worm parameters
 var numOfDataset = 0;
 var index = 0;
-const numberofpages = 1;
+const numberofpages = 2;
 const interval = 5000;
 
 startWorm();
 
 function startWorm(){
+    
     prompt.start()
 
     prompt.get('wormType', (err, result) => {
@@ -90,4 +91,3 @@ function startWorm(){
 
 
 }
-

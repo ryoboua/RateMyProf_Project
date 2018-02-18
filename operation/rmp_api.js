@@ -23,12 +23,6 @@ function getAllProfs(offset) {
     scarper.fetchPage("http://www.ratemyprofessors.com/search.jsp?queryBy=teacherName&queryoption=HEADER&facetSearch=true&offset=" + offset, catchList);
 }
 
-function getProfInfoWorm(num) {
-    for (var i = 2; i < num; i++) {
-        scarper.fetchPageById("http://www.ratemyprofessors.com/ShowRatings.jsp?tid=" + i, catchProfInfo, i);
-    }
-}
-
 function getSchoolInfo(list) {
     for (s in list) {
         scarper.fetchPageById("http://www.ratemyprofessors.com/campusRatings.jsp?sid=" + list[s], catchSchoolInfo, list[s]);
@@ -302,6 +296,9 @@ async function sendManySchoolsToDb(data){
             if (error) throw error;
         })
     }
+
+    // Clearing the package after each insert to db so there's no duplicates
+    package.length = 0;
 }
 
 async function findTagId(tag) {

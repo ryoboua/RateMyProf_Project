@@ -2,5 +2,6 @@
 data.sqlite
 
 node_modules/
+operation/database.js
 bundle.js
 node_modules/stagger
