@@ -17,7 +17,7 @@ const rmp_api = require('./rmp_api');
 // Worm parameters
 var numOfDataset = 0;
 var index = 0;
-const numberofpages = 2;
+const numberofpages = 606;
 const interval = 5000;
 
 startWorm();
