@@ -17,7 +17,7 @@ const rmp_api = require('./rmp_api');
 // Worm parameters
 var numOfDataset = 0;
 var index = 0;
-const numberofpages = 606;
+const numberofpages = 89299;
 const interval = 5000;
 
 startWorm();
@@ -36,12 +36,12 @@ function startWorm(){
                 }, interval);
                 
                 function profWorm() {
-                    if (index == numberofpages) {
+                    if (index === numberofpages) {
                         console.log("Sending Final Dataset to Db and closing worm hole")
                         rmp_api.sendManyTeachersToDb(rmp_api.package);
                         return clearInterval(pworm);
                     }
-                    else if (numOfDataset == 1){
+                    else if (numOfDataset === 1){
                         console.log("Sending to Db\n");
                         rmp_api.sendManyTeachersToDb(rmp_api.package);
                         numOfDataset = 0;
@@ -77,7 +77,7 @@ function startWorm(){
                     } else {
                         const offset = 20 * index;
                         console.log("Getting Page " + (index + 1) + "\n");
-                        rmp_api.getListByCountry('canada',offset);
+                        rmp_api.getListByCountry('united+states',offset);
                         index++;
                         numOfDataset++;
                     }

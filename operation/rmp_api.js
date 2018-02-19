@@ -66,14 +66,14 @@ function getProfTagList(data) {
     return taglist;
 }
 
-async function catchProfInfo(data, id) {
+function catchProfInfo(data, id) {
 
     try {
 
         const $ = cheerio.load(data)
 
         if (($("div").hasClass('header error')) === true) {
-            return console.log("Page Not Found At Id: " + id);
+            return failedEntryLog(id)
         } else {
 
             let firstname = $(".pfname").html();
@@ -127,7 +127,7 @@ async function catchProfInfo(data, id) {
             package.push(results);
         }
     } catch (err) {
-        return console.log("Some weird happned at prof Id: " + id);
+        return failedEntryLog(id) 
     }
 
 }
@@ -178,11 +178,10 @@ function catchSchoolInfo(data, id) {
             results.clubs = SchoolQualityStack[6];
             results.social = SchoolQualityStack[7];
             results.happiness = SchoolQualityStack[8];
-            results.safety = SchoolQualityStack[9];
+            results.safety = SchoolQualityStack[9] ? SchoolQualityStack[9]: '0';
             results.website = website;
 
-            results.country = 'canada';
-
+            results.country = 'usa';
             package.push(results);
         }
     } catch (err) {
@@ -244,50 +243,47 @@ function getProfDepartment(data) {
 }
 
 function sendOnetoDb(data) {
-    connection.connect((err) => {});
-
     connection.query('INSERT INTO Teacher SET ?', data, function(error, results, fields) {
         if (error) throw error;
-        //console.log("Professor successfully inserted in the Teacher table. Insert ID: " + results.insertId + "\n");
-        connection.end((err) => {});
-
+        console.log("Professor successfully inserted in the Teacher table. Insert ID: " + results.insertId + "\n");
     });
-
 }
 
-async function sendManyTeachersToDb(data) {
+function sendManyTeachersToDb(data) {
     for (let item of data) {
-        let temp = _.omit(item, 'taglist')
-        await connection.query('INSERT INTO teachertest SET ?', temp, function(error, results, fields) {
-
-            if (error) throw error;
-
-            const pid = results.insertId;
-            const list = item.taglist
-    //Inserting Tags in the Database
-            for (let tag in list) {
-                findTagId(tag).then(t => {
-                    if (t.length) {
-                        connection.query('INSERT INTO teacher_tags SET tagid = "?", teacherid = "?", count = ?', [t[0].tagid, pid, list[tag]], (error, results, fields) => {
-                            if (error) throw error;                            
-                        })
-                    } else {
-                        console.log("tag could not be found for prodId: "+pid)
-                    } 
-                    
-                })
-
-            }
-
-
-        })
+        findSchoolId(item.rmp_s_id)
+        .then( id => {
+            delete item.rmp_s_id
+            item.s_ref_id = id.length ? id[0].sid : 7490 //7490 represents a fake school in case professor does not have a school id
+        }).then( () => {
+            let temp = _.omit(item, 'taglist')
+            connection.query('INSERT INTO teacher SET ?', temp, function(error, results, fields) {
+                if (error) throw error;
+    
+                const pid = results.insertId;
+                const list = item.taglist
+                //Inserting Tags in the Database
+                for (let tag in list) {
+                    findTagId(tag).then(t => {
+                        if (t.length) {
+                            connection.query('INSERT INTO teacher_tags SET tagid = "?", teacherid = "?", count = ?', [t[0].tagid, pid, list[tag]], (error, results, fields) => {
+                                if (error) throw error;                            
+                            })
+                        } else {
+                            console.log("tag could not be found for prodId: "+pid)
+                        } 
+                        
+                    })
+    
+                }
+            })
+        }
+             
+        )
     };
-
-    console.log("Done")
-
     // Clearing the package after each insert to db so there's no duplicates
     package.length = 0;
-
+    
 }
 
 async function sendManySchoolsToDb(data){
@@ -301,20 +297,27 @@ async function sendManySchoolsToDb(data){
     package.length = 0;
 }
 
-async function findTagId(tag) {
-    return new Promise(function(resolve, reject) {
-            connection.query('SELECT tagid FROM tags WHERE tagtitle = ?', tag, function(error, result, fields) {
+function findTagId(tag) {
+    return new Promise((resolve, reject) => {
+            connection.query('SELECT tagid FROM tags WHERE tagtitle = ?', tag, (error, result, fields) => {
             if (error) throw error;
             resolve(JSON.parse(JSON.stringify(result)));
         })
     });
 }
 
-async function addTag(tag) {
-    return new Promise(function(resolve, reject){
-        connection.query('INSERT INTO tags SET tagtitle = ?', tag, (error, results, fields) => {        
-        if (error) throw error;
-        resolve(JSON.parse(JSON.stringify(results.insertId)));
-        })
+function findSchoolId(id) {
+    return new Promise((resolve, reject) => {
+        connection.query('SELECT sid FROM school WHERE rmp_s_id = ?', id, (error, result, fields) => {
+            if (error) throw error
+            resolve(JSON.parse(JSON.stringify(result)));
+        } )
+    })
+}
+
+function failedEntryLog(id) {
+    connection.query('INSERT INTO failedEntries SET teacher_id = ?', id, (error, results, fields) => {
+        if(error) throw error;
+        return console.log("Something weird happened at prof Id: " + id);
     })
 }
